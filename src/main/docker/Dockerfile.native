@@ -1,0 +1,30 @@
+####
+# This Dockerfile is used in order to build a container that runs the Quarkus application in native (no JVM) mode
+#
+# Before building the docker image run:
+#
+# mvn package -Pnative -Dquarkus.native.container-build=true
+#
+# Then, build the image with:
+#
+# docker build -f src/main/docker/Dockerfile.native -t quarkus/rest-kotlin-quickstart .
+#
+# Then run the container using:
+#
+# docker run -i --rm -p 8080:8080 quarkus/rest-kotlin-quickstart
+#
+###
+FROM registry.access.redhat.com/ubi8/ubi-minimal
+#Install kubectl, helm
+RUN microdnf install tar gzip && \
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl && \
+    chmod +x ./kubectl && \
+    mv ./kubectl /usr/local/bin/kubectl && \
+    curl -L https://get.helm.sh/helm-v2.14.3-linux-amd64.tar.gz | tar xz && mv linux-amd64/helm /bin/helm && rm -rf linux-amd64 && \
+    rm -rf /var/cache/yum/*
+
+WORKDIR /work/
+COPY target/*-runner /work/application
+RUN chmod 775 /work
+EXPOSE 8080
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
