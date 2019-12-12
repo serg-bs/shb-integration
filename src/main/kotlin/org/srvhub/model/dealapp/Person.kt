@@ -1,0 +1,32 @@
+package org.srvhub.model.dealapp
+
+data class Person(
+    val birthday: String,
+    val birthdayPlace: String,
+    val citizenship: String?,
+    val docCodePod: String?,
+    val docDate: String,
+    val docEndDate: String?,
+    val docNumber: String,
+    val docOther: String?,
+    val docSeries: String,
+    val docType: String,
+    val docWho: String,
+    val factAddress: String?,
+    val fio: String,
+    val firstName: String,
+    val id: String,
+    val inn: String,
+    val isPdl: String?,
+    val lastName: String,
+    val mainOksm: String,
+    val middleName: String,
+    val moneyPdl: List<Any>,
+    val otherMoneyPdl: String?,
+    val otherOksm: String?,
+    val pdlType: String?,
+    val regAddress: String,
+    val sex: String?,
+    val snils: String?,
+    val stateInDraft: String?
+)
