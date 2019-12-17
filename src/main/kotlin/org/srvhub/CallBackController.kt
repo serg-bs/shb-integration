@@ -18,6 +18,8 @@ import org.srvhub.model.updateapplicationparams.UpdateApplicationParamsRequest
 import org.srvhub.services.AdapterService
 import org.srvhub.services.MockService
 import org.srvhub.singleton.CredentialManager
+import org.srvhub.singleton.RequestLogger
+import org.srvhub.singleton.Type
 import java.time.LocalDateTime
 import java.util.*
 import javax.annotation.security.PermitAll
@@ -58,41 +60,36 @@ class CallBackController {
     @Consumes(MediaType.APPLICATION_JSON)
     @PermitAll
     fun callback(@Context sec: SecurityContext, request: Request): CommonResponseRequest {
+
         if (request is AddDealApplicationPayloadRequest) {
-            try {
-                logger.info("Мы получили id=${request.payload.dealApplicationId} заявки, начнем обрабатывать ее ассинхронно")
-
-                GlobalScope.async {
-                    по_id_получить_сделку_и_установить_статус(request)
-                    println("Закончили ассинхронно обрабатывать заявку")
-                }
-
-                println("Вернем common response не дожидаясь обработки")
-                return getCommonResponse(request, "SUCCESS", request.payload.dealApplicationId)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                return getCommonResponse(request, "ERROR", request.payload.dealApplicationId)
+            RequestLogger.add(Type.RESPONSE, request.payload.dealApplicationId, request.payloadType, null)
+            logger.info("Мы получили id=${request.payload.dealApplicationId} заявки, начнем обрабатывать ее ассинхронно")
+            GlobalScope.async {
+                по_id_получить_сделку_и_установить_статус(request)
+                println("Закончили ассинхронно обрабатывать заявку")
             }
+
+            println("Вернем common response не дожидаясь обработки")
+            return getCommonResponse(request, "SUCCESS", request.payload.dealApplicationId)
         } else if (request is CommonResponseRequest) {
+            RequestLogger.add(Type.RESPONSE, request.payload.targetObjectId, request.payload.originatorMsgType, request.payload.result)
             logger.info("Пришел ответ на сообщение ${request.payload.originatorMsgType}")
-            if(request.payload.originatorMsgType == "ChangeDealApplicationStatusEvent"){
+            if (request.payload.originatorMsgType == "ChangeDealApplicationStatusEvent") {
                 logger.info("Ответ изменения статус сделки ${request.payload.targetObjectId}, результат=${request.payload.result}")
                 GlobalScope.async {
                     присвоить_сделке_номер(request)
                 }
-            } else if (request.payload.originatorMsgType == "UpdateApplicationParams"){
+            } else if (request.payload.originatorMsgType == "UpdateApplicationParams") {
                 logger.info("Ответ изменения внешнего номера сделки ${request.payload.targetObjectId}, результат=${request.payload.result}")
             } else {
                 logger.error("ХМ. мы не знаем об этом типе ${request.payload.originatorMsgType}")
             }
-
             return getCommonResponse(request, "SUCCESS", request.payload.targetObjectId)
-        }
-        else if (request is ChangeDealApplicationStatusEventRequest) {
+        } else if (request is ChangeDealApplicationStatusEventRequest) {
             println("Поменялся статус заявки в goodfin id=${request.payload.dealApplicationId} ,status=${request.payload.status}")
+            RequestLogger.add(Type.RESPONSE, request.payload.dealApplicationId, request.payloadType, request.payload.status)
             return getCommonResponse(request, "SUCCESS", request.payload.dealApplicationId)
         }
-
         throw IllegalArgumentException("Не умею обрабатывать такое сообщение")
     }
 
@@ -102,42 +99,39 @@ class CallBackController {
                 originatorMsgType = request.payloadType,
                 result = result,
                 targetObjectId = targetObjectId)
-        val commonRequest = CommonResponseRequest(msgDateTime = LocalDateTime.now().toString(),
+
+        return CommonResponseRequest(msgDateTime = LocalDateTime.now().toString(),
                 msgId = UUID.randomUUID(),
                 originator = request.receiver,
                 payload = commonResponse,
                 payloadType = commonResponse.javaClass.simpleName,
                 receiver = "Shb")
-
-        return commonRequest
     }
 
     suspend fun по_id_получить_сделку_и_установить_статус(request: AddDealApplicationPayloadRequest) {
-        try {
-            val dealApplicationId = request.payload.dealApplicationId
-            val credential = CredentialManager.getCredential(request.receiver)
-            val filter = AddDealApplicationRequest(dealApplicationId, "LIST", arrayListOf("FinForm"))
-            val applicationDeal = adapterService.getDealById(credential!!.token, filter)
-            logger.info("Запросили заявку id=${dealApplicationId} по выбранному фильтру. Вернули name=${applicationDeal.requestData.result.name}")
+        val dealApplicationId = request.payload.dealApplicationId
+        val credential = CredentialManager.getCredential(request.receiver)
+        val filter = AddDealApplicationRequest(dealApplicationId, "LIST", arrayListOf("FinForm"))
 
-            val changeDealApplicationStatusEvent = ChangeDealApplicationStatusEvent(dealApplicationId = dealApplicationId,
-                    message = "Смена статуса, вот так мне захотелось", params = null, status = "my_new_status")
-            val openApiRequest = ChangeDealApplicationStatusEventRequest(msgDateTime = LocalDateTime.now().toString(),
-                    msgId = UUID.randomUUID(),
-                    originator = request.receiver,
-                    payload = changeDealApplicationStatusEvent,
-                    payloadType = changeDealApplicationStatusEvent.javaClass.simpleName,
-                    receiver = "Shb")
+        RequestLogger.add(Type.REQUEST, dealApplicationId, filter.javaClass.simpleName, "синхронный вызов")
+        val applicationDeal = adapterService.getDealById(credential!!.token, filter)
+        logger.info("Запросили заявку id=${dealApplicationId} по выбранному фильтру. Вернули name=${applicationDeal.requestData.result.name}")
 
-            adapterService.openApi(credential.token, openApiRequest)
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-        }
+        val changeDealApplicationStatusEvent = ChangeDealApplicationStatusEvent(dealApplicationId = dealApplicationId,
+                message = "Смена статуса, вот так мне захотелось", params = null, status = "my_new_status")
+        val changeDealApplicationStatusEventRequest = ChangeDealApplicationStatusEventRequest(msgDateTime = LocalDateTime.now().toString(),
+                msgId = UUID.randomUUID(),
+                originator = request.receiver,
+                payload = changeDealApplicationStatusEvent,
+                payloadType = changeDealApplicationStatusEvent.javaClass.simpleName,
+                receiver = "Shb")
+
+        RequestLogger.add(Type.REQUEST, dealApplicationId, changeDealApplicationStatusEvent.javaClass.simpleName, null)
+        adapterService.openApi(credential.token, changeDealApplicationStatusEventRequest)
     }
 
     suspend fun присвоить_сделке_номер(request: CommonResponseRequest) {
-        try {
-        val responsePayload = UpdateApplicationParams(applicationNumber = "Service"+UUID.randomUUID(),
+        val responsePayload = UpdateApplicationParams(applicationNumber = "Service" + UUID.randomUUID(),
                 dealApplicationId = request.payload.targetObjectId)
         val updateApplicationParamsRequest = UpdateApplicationParamsRequest(msgDateTime = LocalDateTime.now().toString(),
                 msgId = UUID.randomUUID(),
@@ -147,11 +141,9 @@ class CallBackController {
                 receiver = "Shb")
         val credential = CredentialManager.getCredential(request.receiver)
 
-        logger.info("Для заявки id=${request.payload.targetObjectId} проставляем внешний айди ${responsePayload.applicationNumber}")
+//        logger.info("Для заявки id=${request.payload.targetObjectId} проставляем внешний айди ${responsePayload.applicationNumber}")
+        RequestLogger.add(Type.REQUEST, request.payload.targetObjectId, responsePayload.javaClass.simpleName, null)
         adapterService.openApi(credential!!.token, updateApplicationParamsRequest)
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-        }
     }
 }
 

@@ -1,29 +1,24 @@
-package org.srvhub;
+package org.srvhub.logger
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vertx.core.http.HttpServerRequest;
-import org.jboss.logging.Logger;
-
-import javax.inject.Inject;
-import javax.ws.rs.client.ClientRequestContext;
-import javax.ws.rs.client.ClientRequestFilter;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.Provider;
-import java.io.IOException;
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.jboss.logging.Logger
+import java.io.IOException
+import javax.inject.Inject
+import javax.ws.rs.client.ClientRequestContext
+import javax.ws.rs.client.ClientRequestFilter
+import javax.ws.rs.ext.Provider
 
 @Provider
-public class ClientLoggingRequestFilter implements ClientRequestFilter {
-
-    private static final Logger LOG = Logger.getLogger(ClientLoggingRequestFilter.class);
-
+class ClientLoggingRequestFilter : ClientRequestFilter {
     @Inject
-    ObjectMapper objectMapper;
+    lateinit var objectMapper: ObjectMapper
 
-    @Override
-    public void filter(ClientRequestContext context) throws IOException {
-        LOG.info("\nClient request ${context.uri.path} \n" + objectMapper.writeValueAsString(context.getEntity()));
+    @Throws(IOException::class)
+    override fun filter(context: ClientRequestContext) {
+        LOG.info("\nClient request ${context.uri.path} \n" + objectMapper.writeValueAsString(context.entity))
+    }
+
+    companion object {
+        private val LOG = Logger.getLogger(ClientLoggingRequestFilter::class.java)
     }
 }
