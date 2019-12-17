@@ -7,6 +7,7 @@ import org.srvhub.model.statusmapping.StatusMappingRequest
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient
 import org.srvhub.model.auth.Registration
 import org.srvhub.model.auth.Token
+import org.srvhub.model.integrationlog.IntegrationLogFilter
 import javax.enterprise.context.ApplicationScoped
 import javax.ws.rs.*
 
@@ -46,5 +47,9 @@ interface SandboxService {
     fun generateDeals(@HeaderParam("Authorization") authorization: String?, params: GenerateDealRequest)
 
 
+    @POST
+    @Path("/sandbox/integrationlogs")
+    @Produces("application/json")
+    fun getIntegrationLog(@HeaderParam("Authorization") authorization: String?, params: IntegrationLogFilter): Any
 
 }

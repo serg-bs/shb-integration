@@ -2,7 +2,7 @@ package org.srvhub.model.changedealstatus
 
 import java.util.*
 
-data class ChangeDealApplicationStatusEventPayload(
+data class ChangeDealApplicationStatusEvent(
         val dealApplicationId: UUID,
         val message: String,
         val params: String?,

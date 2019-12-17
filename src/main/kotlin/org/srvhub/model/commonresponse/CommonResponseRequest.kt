@@ -4,10 +4,10 @@ import org.srvhub.model.Request
 import java.util.*
 
 data class CommonResponseRequest(
-        val msgDateTime: String,
-        val msgId: UUID,
-        val originator: String,
-        val payload: CommonResponsePayload,
-        val payloadType: String,
-        val receiver: String
-) :Request
+        override val msgDateTime: String,
+        override val msgId: UUID,
+        override val originator: String,
+        val payload: CommonResponse,
+        override val payloadType: String,
+        override val receiver: String
+) :Request(msgDateTime, msgId, originator, payloadType, receiver)
