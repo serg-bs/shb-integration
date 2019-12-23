@@ -4,7 +4,7 @@ import io.vertx.core.logging.LoggerFactory
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.eclipse.microprofile.rest.client.inject.RestClient
 import org.jboss.resteasy.annotations.jaxrs.PathParam
-import org.srvhub.model.EmptyRequest
+import org.srvhub.model.Empty
 import org.srvhub.model.auth.Token
 import org.srvhub.model.generatedeals.GenerateDealRequest
 import org.srvhub.model.integrationendpoint.Authentication
@@ -46,7 +46,8 @@ class InitController {
     @Path("/hello")
     @Produces(MediaType.TEXT_HTML)
     fun init(): String {
-        val emptyRequest = EmptyRequest()
+        val emptyRequest = Empty()
+        logger.info("dfsdfadfasdf")
         var registration = sandboxService.registerService(emptyRequest)
         logger.info("Мы получили login=${registration.serviceSystemName}, пароль=${registration.password}")
 

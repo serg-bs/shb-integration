@@ -23,7 +23,7 @@ class ServerLoggingRequestFilter : ContainerRequestFilter {
         val baos = ByteArrayOutputStream()
         IOUtils.copy(stream, baos)
         val content = baos.toInputStream().bufferedReader().use(BufferedReader::readText)
-        LOG.info("\nServer request ${info!!.path} \n" + content)
+        LOG.trace("\nServer request ${info!!.path} \n" + content)
         context.entityStream = baos.toInputStream()
     }
 

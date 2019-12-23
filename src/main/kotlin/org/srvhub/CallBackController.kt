@@ -3,23 +3,20 @@ package org.srvhub
 import io.vertx.core.logging.LoggerFactory
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.eclipse.microprofile.rest.client.inject.RestClient
+import org.srvhub.model.Empty
 import org.srvhub.model.Request
 import org.srvhub.model.changedealstatus.ChangeDealApplicationStatusEvent
 import org.srvhub.model.changedealstatus.ChangeDealApplicationStatusEventRequest
 import org.srvhub.model.commonresponse.CommonResponse
 import org.srvhub.model.commonresponse.CommonResponseRequest
 import org.srvhub.model.dealapp.AddDealApplicationRequest
+import org.srvhub.model.dealapp.AddDealApplicationResponse
 import org.srvhub.model.dealappid.AddDealApplicationPayloadRequest
 import org.srvhub.model.updateapplicationparams.UpdateApplicationParams
 import org.srvhub.model.updateapplicationparams.UpdateApplicationParamsRequest
 import org.srvhub.services.AdapterService
-import org.srvhub.tmp.MockService
 import org.srvhub.singleton.CredentialManager
-import org.srvhub.singleton.RequestLogger
-import org.srvhub.singleton.Type
 import java.time.LocalDateTime
 import java.util.*
 import javax.annotation.security.PermitAll
@@ -45,38 +42,37 @@ class CallBackController {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @PermitAll
-    fun callback(@Context sec: SecurityContext, request: Request): CommonResponseRequest {
+    fun callback(@Context sec: SecurityContext, request: Request) :Empty {
 
         if (request is AddDealApplicationPayloadRequest) {
-            RequestLogger.add(Type.RESPONSE, request.payload.dealApplicationId, request.payloadType, null)
-            logger.info("Мы получили id=${request.payload.dealApplicationId} заявки, начнем обрабатывать ее ассинхронно")
+            logger.info("Request from shb. AddDealApplicationPayloadRequest targetObject=${request.payload.dealApplicationId}")
             GlobalScope.async {
-                по_id_получить_сделку_и_установить_статус(request)
-                println("Закончили ассинхронно обрабатывать заявку")
+                синхронно_по_dealid_получить_сделку(request)
+
+                val commonResponse = getCommonResponse(request, "SUCCESS", request.payload.dealApplicationId)
+                val credential = CredentialManager.getCredential(request.receiver)!!
+                adapterService.openApi(credential.token, commonResponse)
+                logger.info("Response to shb. AddDealApplicationPayloadRequest(CommonResponse) targetObject=${request.payload.dealApplicationId}")
+
+            }
+            GlobalScope.async {
+                присвоить_сделке_номер(request.payload.dealApplicationId, request.receiver)
+            }
+            GlobalScope.async {
+                изменить_статус_сделки(dealApplicationId = request.payload.dealApplicationId, originator = request.receiver)
+            }
+        } else if (request is CommonResponseRequest) {
+            logger.info("Response  from shb. ${request.payload.originatorMsgType}(CommonResponse) targetObject=${request.payload.targetObjectId}, result=${request.payload.result}")
+            if (request.payload.result != "SUCCESS"){
+                изменить_статус_сделки(dealApplicationId = request.payload.targetObjectId, originator = request.receiver)
             }
 
-            println("Вернем common response не дожидаясь обработки")
-            return getCommonResponse(request, "SUCCESS", request.payload.dealApplicationId)
-        } else if (request is CommonResponseRequest) {
-            RequestLogger.add(Type.RESPONSE, request.payload.targetObjectId, request.payload.originatorMsgType, request.payload.result)
-            logger.info("Пришел ответ на сообщение ${request.payload.originatorMsgType}")
-            if (request.payload.originatorMsgType == "ChangeDealApplicationStatusEvent") {
-                logger.info("Ответ изменения статус сделки ${request.payload.targetObjectId}, результат=${request.payload.result}")
-                GlobalScope.async {
-                    присвоить_сделке_номер(request)
-                }
-            } else if (request.payload.originatorMsgType == "UpdateApplicationParams") {
-                logger.info("Ответ изменения внешнего номера сделки ${request.payload.targetObjectId}, результат=${request.payload.result}")
-            } else {
-                logger.error("ХМ. мы не знаем об этом типе ${request.payload.originatorMsgType}")
-            }
-            return getCommonResponse(request, "SUCCESS", request.payload.targetObjectId)
         } else if (request is ChangeDealApplicationStatusEventRequest) {
-            println("Поменялся статус заявки в goodfin id=${request.payload.dealApplicationId} ,status=${request.payload.status}")
-            RequestLogger.add(Type.RESPONSE, request.payload.dealApplicationId, request.payloadType, request.payload.status)
-            return getCommonResponse(request, "SUCCESS", request.payload.dealApplicationId)
+            logger.info("Response from shb. ChangeDealApplicationStatusEventRequest targetObject=${request.payload.dealApplicationId}, result=${request.payload.status}")
+        } else {
+            throw IllegalArgumentException("Не умею обрабатывать такое сообщение")
         }
-        throw IllegalArgumentException("Не умею обрабатывать такое сообщение")
+        return Empty()
     }
 
     private fun getCommonResponse(request: Request, result: String, targetObjectId: UUID): CommonResponseRequest {
@@ -94,39 +90,43 @@ class CallBackController {
                 receiver = "Shb")
     }
 
-    suspend fun по_id_получить_сделку_и_установить_статус(request: AddDealApplicationPayloadRequest) {
+    suspend fun синхронно_по_dealid_получить_сделку(request: AddDealApplicationPayloadRequest) :AddDealApplicationResponse {
         val dealApplicationId = request.payload.dealApplicationId
-        val credential = CredentialManager.getCredential(request.receiver)
+        val originator = request.receiver
+        val credential = CredentialManager.getCredential(originator)
         val filter = AddDealApplicationRequest(dealApplicationId, "LIST", arrayListOf("FinForm"))
 
-        RequestLogger.add(Type.REQUEST, dealApplicationId, filter.javaClass.simpleName, "синхронный вызов")
         val applicationDeal = adapterService.getDealById(credential!!.token, filter)
-        logger.info("Запросили заявку id=${dealApplicationId} по выбранному фильтру. Вернули name=${applicationDeal.requestData.result.name}")
+        logger.info("Request(Rest синхронный) to shb. Запросили заявку id=${dealApplicationId} по выбранному фильтру. Вернули name=${applicationDeal.requestData.result.name}")
+        return applicationDeal
+    }
 
+    private fun изменить_статус_сделки(dealApplicationId: UUID, originator: String) {
+        val credential = CredentialManager.getCredential(originator)!!
         val changeDealApplicationStatusEvent = ChangeDealApplicationStatusEvent(dealApplicationId = dealApplicationId,
                 message = "Смена статуса, вот так мне захотелось", params = null, status = "my_new_status")
         val changeDealApplicationStatusEventRequest = ChangeDealApplicationStatusEventRequest(msgDateTime = LocalDateTime.now().toString(),
                 msgId = UUID.randomUUID(),
-                originator = request.receiver,
+                originator = originator,
                 payload = changeDealApplicationStatusEvent,
                 payloadType = changeDealApplicationStatusEvent.javaClass.simpleName,
                 receiver = "Shb")
 
-        RequestLogger.add(Type.REQUEST, dealApplicationId, changeDealApplicationStatusEvent.javaClass.simpleName, null)
+        logger.info("Request to shb. ChangeDealApplicationStatusEvent targetObject=${dealApplicationId}")
         adapterService.openApi(credential.token, changeDealApplicationStatusEventRequest)
     }
 
-    suspend fun присвоить_сделке_номер(request: CommonResponseRequest) {
+    suspend fun присвоить_сделке_номер(dealApplicationId: UUID, originator :String) {
         val responsePayload = UpdateApplicationParams(applicationNumber = "Service" + UUID.randomUUID(),
-                dealApplicationId = request.payload.targetObjectId)
+                dealApplicationId = dealApplicationId)
         val updateApplicationParamsRequest = UpdateApplicationParamsRequest(msgDateTime = LocalDateTime.now().toString(),
                 msgId = UUID.randomUUID(),
-                originator = request.receiver,
+                originator = originator,
                 payload = responsePayload,
                 payloadType = responsePayload.javaClass.simpleName,
                 receiver = "Shb")
-        val credential = CredentialManager.getCredential(request.receiver)
-        RequestLogger.add(Type.REQUEST, request.payload.targetObjectId, responsePayload.javaClass.simpleName, null)
+        val credential = CredentialManager.getCredential(originator)
+        logger.info("Request to shb. UpdateApplicationParamsRequest targetObject=${dealApplicationId}")
         adapterService.openApi(credential!!.token, updateApplicationParamsRequest)
     }
 }

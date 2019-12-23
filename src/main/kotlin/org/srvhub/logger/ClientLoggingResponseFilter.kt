@@ -20,7 +20,7 @@ class ClientLoggingResponseFilter : ClientResponseFilter {
         val baos = ByteArrayOutputStream()
         IOUtils.copy(stream, baos)
         val content = baos.toInputStream().bufferedReader().use(BufferedReader::readText)
-        LOG.info("\nClient response ${containerRequestContext.uri.path} \n" + content)
+        LOG.trace("\nClient response ${containerRequestContext.uri.path} \n" + content)
         context.entityStream = baos.toInputStream()
     }
 

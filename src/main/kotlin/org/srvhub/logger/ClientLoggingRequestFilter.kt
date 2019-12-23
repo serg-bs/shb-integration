@@ -15,7 +15,7 @@ class ClientLoggingRequestFilter : ClientRequestFilter {
 
     @Throws(IOException::class)
     override fun filter(context: ClientRequestContext) {
-        LOG.info("\nClient request ${context.uri.path} \n" + objectMapper.writeValueAsString(context.entity))
+        LOG.trace("\nClient request ${context.uri.path} \n" + objectMapper.writeValueAsString(context.entity))
     }
 
     companion object {

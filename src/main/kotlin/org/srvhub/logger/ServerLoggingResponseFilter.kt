@@ -16,7 +16,7 @@ class ServerLoggingResponseFilter : ContainerResponseFilter {
 
     @Throws(IOException::class)
     override fun filter(containerRequestContext: ContainerRequestContext, context: ContainerResponseContext) {
-        LOG.info("\nServer response ${containerRequestContext.uriInfo.path} \n" + objectMapper.writeValueAsString(context.entity))
+        LOG.trace("\nServer response ${containerRequestContext.uriInfo.path} \n status: ${context.status} " + objectMapper.writeValueAsString(context.entity))
     }
 
     companion object {

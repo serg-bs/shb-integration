@@ -1,6 +1,6 @@
 package org.srvhub.services
 
-import org.srvhub.model.EmptyRequest
+import org.srvhub.model.Empty
 import org.srvhub.model.generatedeals.GenerateDealRequest
 import org.srvhub.model.integrationendpoint.IntegrationEndpoint
 import org.srvhub.model.statusmapping.StatusMappingRequest
@@ -18,7 +18,7 @@ interface SandboxService {
 //    @Path("/api/sandbox/registerservice")
     @Path("/sandbox/registerservice")
     @Produces("application/json")
-    fun registerService(data: EmptyRequest?): Registration
+    fun registerService(data: Empty?): Registration
 
     @POST
 //    @Path("/api/oauth/token")
