@@ -15,7 +15,6 @@ import org.srvhub.model.statusmapping.Status
 import org.srvhub.model.statusmapping.StatusMapping
 import org.srvhub.model.statusmapping.StatusMappingRequest
 import org.srvhub.services.AdapterService
-import org.srvhub.services.MockService
 import org.srvhub.services.SandboxService
 import org.srvhub.singleton.Credential
 import org.srvhub.singleton.CredentialManager
@@ -41,10 +40,6 @@ class InitController {
     @field: RestClient
     lateinit var adapterService: AdapterService
 
-    @Inject
-    @field: RestClient
-    lateinit var mockService: MockService
-
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @GET
@@ -64,7 +59,7 @@ class InitController {
         val authentication = Authentication(type = "BASIC", userName = "QQQ1", password = "WWW1")
 
         val endpoint = Endpoint(authentication, baseUrl = baseUrl, type = "HTTP")
-        val integrationEndpoint = IntegrationEndpoint(endpoint, null)
+        val integrationEndpoint = IntegrationEndpoint(endpoint, "ID")
         adapterService.integrationEndpointUpdate(token, integrationEndpoint)
         logger.info("Зарегистрировали callback endpoint")
 
@@ -74,11 +69,11 @@ class InitController {
 
         val linkIntegrationLog = "http://localhost:${port}/init/integrationlogs/${registration.serviceSystemName}"
         return "Поздравляю! login=${registration.serviceSystemName}, пароль=${registration.password} <br>вы зарегистрировались в системе Goodfin! <br> " +
-                "Ваш токен ${credential} <br> <br>"+
+                "Ваш токен ${credential} <br> <br>" +
                 "Url для обратного вызова ${baseUrl} <br>" +
                 "Ендпоинт для отладки " +
                 " <a href=\"${linkIntegrationLog}\">${linkIntegrationLog}</a><br>" +
-                "Установлен status mapping<br>"+
+                "Установлен status mapping<br>" +
                 "Сгенерировали тестовые сделки."
     }
 
@@ -94,7 +89,7 @@ class InitController {
     @GET
     @Path("/integrationlogs/{sysVal}")
     @Produces(MediaType.APPLICATION_JSON)
-    fun test(@PathParam("sysVal")  sysVal: String) : Any {
+    fun test(@PathParam("sysVal") sysVal: String): Any {
         val credential = CredentialManager.getCredential(sysVal)
         return sandboxService.getIntegrationLog(credential!!.token, IntegrationLogFilter())
     }

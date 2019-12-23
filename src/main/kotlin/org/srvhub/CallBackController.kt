@@ -16,7 +16,7 @@ import org.srvhub.model.dealappid.AddDealApplicationPayloadRequest
 import org.srvhub.model.updateapplicationparams.UpdateApplicationParams
 import org.srvhub.model.updateapplicationparams.UpdateApplicationParamsRequest
 import org.srvhub.services.AdapterService
-import org.srvhub.services.MockService
+import org.srvhub.tmp.MockService
 import org.srvhub.singleton.CredentialManager
 import org.srvhub.singleton.RequestLogger
 import org.srvhub.singleton.Type
@@ -39,21 +39,7 @@ class CallBackController {
     @field: RestClient
     lateinit var adapterService: AdapterService
 
-    @Inject
-    @field: RestClient
-    lateinit var mockService: MockService
-
     private val logger = LoggerFactory.getLogger(javaClass)
-
-    @POST
-    @Path("/test")
-    @Produces(MediaType.TEXT_HTML)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @PermitAll
-    fun test(request: Request): String {
-        print(request)
-        return "Hello test"
-    }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -140,23 +126,7 @@ class CallBackController {
                 payloadType = responsePayload.javaClass.simpleName,
                 receiver = "Shb")
         val credential = CredentialManager.getCredential(request.receiver)
-
-//        logger.info("Для заявки id=${request.payload.targetObjectId} проставляем внешний айди ${responsePayload.applicationNumber}")
         RequestLogger.add(Type.REQUEST, request.payload.targetObjectId, responsePayload.javaClass.simpleName, null)
         adapterService.openApi(credential!!.token, updateApplicationParamsRequest)
     }
-}
-
-
-fun main() {
-    println("Start")
-
-// Start a coroutine
-    GlobalScope.launch {
-        delay(1000)
-        println("Hello")
-    }
-
-//    Thread.sleep(2000) // wait for 2 seconds
-    println("Stop")
 }

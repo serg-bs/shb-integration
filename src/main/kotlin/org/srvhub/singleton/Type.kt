@@ -1,6 +1,6 @@
 package org.srvhub.singleton
 
 enum class Type {
-RESPONSE,
+    RESPONSE,
     REQUEST
 }

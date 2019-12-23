@@ -1,4 +1,4 @@
-package org.srvhub.services
+package org.srvhub.tmp
 
 import org.srvhub.model.dealapp.AddDealApplicationRequest
 import org.srvhub.model.integrationendpoint.IntegrationEndpoint
