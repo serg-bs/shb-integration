@@ -5,6 +5,7 @@ import org.srvhub.model.generatedeals.GenerateDealRequest
 import org.srvhub.model.integrationendpoint.IntegrationEndpoint
 import org.srvhub.model.statusmapping.StatusMappingRequest
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient
+import org.jboss.resteasy.annotations.jaxrs.QueryParam
 import org.srvhub.model.auth.Registration
 import org.srvhub.model.auth.Token
 import org.srvhub.model.integrationlog.IntegrationLogFilter
@@ -43,10 +44,9 @@ interface SandboxService {
     @Produces("application/json")
     fun errorMappingUpdate(@HeaderParam("Authorization") authorization: String?, params: StatusMappingRequest)
 
-    @POST
-    @Path("/api/document/getdocumentfile")
-    @Produces("application/json")
-    fun getDocumentFile(@HeaderParam("Authorization") authorization: String?, documentId: UUID, isInline: java.lang.Boolean= Boolean(true)): Any
+    @GET
+    @Path("/document/getdocumentfile")
+    fun getDocumentFile(@HeaderParam("Authorization") authorization: String?, @QueryParam documentId: UUID, @QueryParam isInline: java.lang.Boolean= Boolean(true)): Any
 
     @POST
     @Path("/sandbox/generatedeals")

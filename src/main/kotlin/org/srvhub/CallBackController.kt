@@ -61,8 +61,9 @@ class CallBackController {
                 присвоить_сделке_номер(request.payload.dealApplicationId, request.receiver)
 
                 изменить_статус_сделки(dealApplicationId = request.payload.dealApplicationId, originator = request.receiver)
-                val dealApplicationResponse = синхронно_по_dealid_получить_сделку(request)
+                val dealApplicationResponse = синхронно_по_dealid_получить_сделку(request, arrayListOf(FetchedFieldsName.ApplicationDocument))
                 val documentId = dealApplicationResponse.requestData.result.clientDocuments[0]
+                val applicationDocument = dealApplicationResponse.requestData.fetchFields.ApplicationDocument
                 получить_докуметы(documentId, originator = request.receiver)
             }
         } else if (request is CommonResponseRequest) {
@@ -94,11 +95,12 @@ class CallBackController {
                 receiver = "Shb")
     }
 
-    suspend fun синхронно_по_dealid_получить_сделку(request: AddDealApplicationPayloadRequest) :AddDealApplicationResponse {
+    suspend fun синхронно_по_dealid_получить_сделку(request: AddDealApplicationPayloadRequest, fetchFields: List<FetchedFieldsName>) :AddDealApplicationResponse {
         val dealApplicationId = request.payload.dealApplicationId
         val originator = request.receiver
         val credential = CredentialManager.getCredential(originator)
-        val filter = AddDealApplicationRequest(dealApplicationId, "LIST", arrayListOf("FinForm"))
+
+        val filter = AddDealApplicationRequest(dealApplicationId, "LIST", fetchFields)
 
         val applicationDeal = adapterService.getDealById(credential!!.token, filter)
         logger.info("Request(Rest синхронный) to shb. Запросили заявку id=${dealApplicationId} по выбранному фильтру. Вернули name=${applicationDeal.requestData.result.name}")
