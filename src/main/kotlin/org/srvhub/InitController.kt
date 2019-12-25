@@ -47,7 +47,6 @@ class InitController {
     @Produces(MediaType.TEXT_HTML)
     fun init(): String {
         val emptyRequest = Empty()
-        logger.info("dfsdfadfasdf")
         var registration = sandboxService.registerService(emptyRequest)
         logger.info("Мы получили login=${registration.serviceSystemName}, пароль=${registration.password}")
 

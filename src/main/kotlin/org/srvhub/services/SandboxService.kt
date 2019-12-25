@@ -8,6 +8,8 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient
 import org.srvhub.model.auth.Registration
 import org.srvhub.model.auth.Token
 import org.srvhub.model.integrationlog.IntegrationLogFilter
+import java.lang.Boolean
+import java.util.*
 import javax.enterprise.context.ApplicationScoped
 import javax.ws.rs.*
 
@@ -40,6 +42,11 @@ interface SandboxService {
     @Path("/api/service/errormapping/update")
     @Produces("application/json")
     fun errorMappingUpdate(@HeaderParam("Authorization") authorization: String?, params: StatusMappingRequest)
+
+    @POST
+    @Path("/api/document/getdocumentfile")
+    @Produces("application/json")
+    fun getDocumentFile(@HeaderParam("Authorization") authorization: String?, documentId: UUID, isInline: java.lang.Boolean= Boolean(true)): Any
 
     @POST
     @Path("/sandbox/generatedeals")

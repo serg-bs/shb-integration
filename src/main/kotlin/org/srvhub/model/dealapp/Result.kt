@@ -1,5 +1,7 @@
 package org.srvhub.model.dealapp
 
+import java.util.*
+
 data class Result(
         val agent: String?,
         val author: String,
@@ -9,7 +11,7 @@ data class Result(
         val clientContact: String,
         val clientContactEmail: String,
         val clientContactPhone: String,
-        val clientDocuments: List<Any>,
+        val clientDocuments: List<UUID>,
         val currencyType: String,
         val dealDocuments: List<Any>,
         val dealNumber: String,
