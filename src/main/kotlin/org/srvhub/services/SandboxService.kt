@@ -13,6 +13,8 @@ import java.lang.Boolean
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 import javax.ws.rs.*
+import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
 @ApplicationScoped
 @RegisterRestClient
@@ -45,8 +47,9 @@ interface SandboxService {
     fun errorMappingUpdate(@HeaderParam("Authorization") authorization: String?, params: StatusMappingRequest)
 
     @GET
-    @Path("/document/getdocumentfile")
-    fun getDocumentFile(@HeaderParam("Authorization") authorization: String?, @QueryParam documentId: UUID, @QueryParam isInline: java.lang.Boolean= Boolean(true)): Any
+    @Path("/document/downloaddocumentfile")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    fun getDocumentFile(@HeaderParam("Authorization") authorization: String?, @QueryParam documentFileId: String, @QueryParam isInline: java.lang.Boolean= Boolean(true)): Response
 
     @POST
     @Path("/sandbox/generatedeals")

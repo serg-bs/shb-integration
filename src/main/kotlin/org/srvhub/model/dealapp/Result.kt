@@ -13,7 +13,7 @@ data class Result(
         val clientContactPhone: String,
         val clientDocuments: List<UUID>,
         val currencyType: String,
-        val dealDocuments: List<Any>,
+        val dealDocuments: List<UUID>,
         val dealNumber: String,
         val dealProbability: String?,
         val financeForms: Any?,

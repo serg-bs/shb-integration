@@ -1,8 +1,13 @@
 package org.srvhub.model.dealapp
 
+import org.srvhub.model.ApplicationDocumentFile
+import org.srvhub.model.ApplicationDocumentFileHash
+
 data class FetchFields(
-        val ApplicationDocument: List<Any>?,
-        val ApplicationDocumentBranch: List<Any>?,
+        val ApplicationDocument: List<ApplicationDocument>?,
+        val ApplicationDocumentBranch: List<ApplicationDocumentBranch>?,
+        val ApplicationDocumentFile: List<ApplicationDocumentFile>?,
+        val ApplicationDocumentFileHash: List<ApplicationDocumentFileHash>?,
         val BankingDetail: List<BankingDetail>?,
         val Company: List<Company>?,
         val CompanyAddress: List<CompanyAddres>?,
@@ -13,7 +18,7 @@ data class FetchFields(
         val CurrencyTypeCatalog: List<CurrencyTypeCatalog>?,
         val DealAddCategory: List<DealAddCategory>?,
         val DealAddField: List<Any>?,
-        val DocumentRoot: List<Any>?,
+        val DocumentRoot: List<DocumentRoot>?,
         val FederalLawTypeCatalog: List<FederalLawTypeCatalog>?,
         val FinanceForm: List<FinanceForm>?,
         val FinanceFormValues: List<FinanceFormValue>?,
@@ -21,7 +26,7 @@ data class FetchFields(
         val FinancePeriod: List<FinancePeriod>?,
         val LegalFounder: List<LegalFounder>?,
         val LegalTypeCatalog: List<LegalTypeCatalog>?,
-        val ModifierParticipant: List<Any>?,
+        val ModifierParticipant: List<ModifierParticipant>?,
         val OkatoCatalog: List<Any>?,
         val OkfsCatalog: List<Any>?,
         val OkoguCatalog: List<OkoguCatalog>?,
@@ -36,5 +41,8 @@ data class FetchFields(
         val PlacementTypeCatalog: List<PlacementTypeCatalog>?,
         val TaxSystemCatalog: List<TaxSystemCatalog>?,
         val TopTypeCatalog: List<Any>?,
-        val UserAssignment: List<UserAssignment>?
+        val UserAssignment: List<UserAssignment>?,
+        val ClientDocuments: List<Any>?,
+        val DealDocuments: List<Any>?
+
 )

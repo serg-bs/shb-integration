@@ -40,5 +40,9 @@ enum class FetchedFieldsName {
     FederalLawType,
     PlacementType,
     CompanySourceInfo,
-    FinForm
+    FinForm,
+    ApplicationDocumentFile,
+    ApplicationDocumentFileHash,
+    ClientDocuments,
+    DealDocuments
 }
