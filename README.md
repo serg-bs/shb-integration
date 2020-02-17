@@ -8,3 +8,7 @@ class InitController {
 - Запуск приложения ./mvnw compile quarkus:dev
 - Открыть в браузере http://localhost:8082/init/hello
 - Логирование запросов можно увидеть в файле trace.log
+
+
+##  Quickstart интеграция с Goodfin через soap ui
+Файл проекта soapui-project.xml
